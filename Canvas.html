@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Working Game</title>
+
+
+
+
+	<style type="text/css">
+		#container{
+			width: 200px;
+			height:100px;
+			position: relative;
+			outline: 1px solid black;
+
+
+		}
+
+		.player{
+				height: 10px;
+				width: 10px;
+				position: relative;
+				float: left;
+				background-color: rgba(250,0,0,.8);
+
+
+		}
+		.grass{
+				height: 10px;
+				width: 10px;
+				position: relative;
+				float: left;
+				background-color: rgba(0,0,0,.1);
+		}	
+		.dirt{
+				height: 10px;
+				width: 10px;
+				position: relative;
+				float: left;
+				background-color: rgba(1,1,1,1);
+		}
+
+
+	</style>
+
+</head>
+<body>
+<div id="container"></div>
+
+
+
+
+
+
+	<script>
+
+
+			
+
+
+
+
+(function () {
+    var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+    window.requestAnimationFrame = requestAnimationFrame;
+})();
+
+
+var level=[
+			[1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+			[1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+			[1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+			[1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0],
+			[1,1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0],
+			[1,1,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0],
+			[1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+			[1,1,0,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,0,0],
+			[1,1,0,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,0,0],
+			[1,1,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1]
+			];
+
+			function drawMap(){
+
+				for(var i=0; i < level.length; i++){
+					for(var j=0; j < level[i].length; j++){
+
+						if(parseInt(level[i][j]) == 0){
+							$("#container").append('<div class="grass"></div>');
+						}
+						if(parseInt(level[i][j]) == 1){
+							$("#container").append('<div class="dirt"></div>');
+						}
+						if(parseInt(level[i][j]) == 2){
+							$("#container").append('<div class="player"></div>');
+						}
+					}
+
+				}
+
+
+			}
+
+			window.onload=function(){
+				drawMap();
+			}
+
+function update() {
+    // check keys
+    if (keys[38] || keys[32]) {
+        // up arrow or space
+        if (!player.jumping && player.grounded) {
+            player.jumping = true;
+            player.grounded = false;
+            player.velY = -player.speed * 2;
+        }
+    }
+    if (keys[39]) {
+        // right arrow
+        if (player.velX < player.speed) {
+            player.velX++;
+        }
+    }
+    if (keys[37]) {
+        // left arrow
+        if (player.velX > -player.speed) {
+            player.velX--;
+        }
+    }
+    
+
+
+    
+    player.velX *= friction;
+    player.velY += gravity;
+
+    
+    player.grounded = false;
+    for (var i = 0; i < level.length; i++) {
+        ctx.rect(level[i].x, level[i].y, level[i].width, level[i].height);
+        
+        var dir = colCheck(player, level[i][j]);
+
+        if (dir === "l" || dir === "r") {
+            player.velX = 0;
+            player.jumping = false;
+        } else if (dir === "b") {
+            player.grounded = true;
+            player.jumping = false;
+        } else if (dir === "t") {
+            player.velY *= -1;
+        }
+
+    }
+    
+    if(player.grounded){
+         player.velY = 0;
+    }
+    
+    player.x += player.velX;
+    player.y += player.velY;
+
+    ctx.fill();
+    ctx.fillStyle = "red";
+    ctx.fillRect(player.x, player.y, player.width, player.height);
+
+    requestAnimationFrame(update);
+}
+
+function colCheck(shapeA, shapeB) {
+    // get the vectors to check against
+    var vX = (shapeA.x + (shapeA.width / 2)) - (shapeB.x + (shapeB.width / 2)),
+        vY = (shapeA.y + (shapeA.height / 2)) - (shapeB.y + (shapeB.height / 2)),
+        // add the half widths and half heights of the objects
+        hWidths = (shapeA.width / 2) + (shapeB.width / 2),
+        hHeights = (shapeA.height / 2) + (shapeB.height / 2),
+        colDir = null;
+
+    // if the x and y vector are less than the half width or half height, they we must be inside the object, causing a collision
+    if (Math.abs(vX) < hWidths && Math.abs(vY) < hHeights) {
+        // figures out on which side we are colliding (top, bottom, left, or right)
+        var oX = hWidths - Math.abs(vX),
+            oY = hHeights - Math.abs(vY);
+        if (oX >= oY) {
+            if (vY > 0) {
+                colDir = "t";
+                shapeA.y += oY;
+            } else {
+                colDir = "b";
+                shapeA.y -= oY;
+            }
+        } else {
+            if (vX > 0) {
+                colDir = "l";
+                shapeA.x += oX;
+            } else {
+                colDir = "r";
+                shapeA.x -= oX;
+            }
+        }
+    }
+    return colDir;
+}
+
+document.body.addEventListener("keydown", function (e) {
+    keys[e.keyCode] = true;
+});
+
+document.body.addEventListener("keyup", function (e) {
+    keys[e.keyCode] = false;
+});
+
+
+window.addEventListener("load", function () {
+    update();
+});
+	</script>
+
+<script src="https://code.jquery.com/jquery-3.1.0.slim.min.js" integrity="sha256-cRpWjoSOw5KcyIOaZNo4i6fZ9tKPhYYb6i5T9RSVJG8=" crossorigin="anonymous"></script>
+
+
+</body>
+</html>
